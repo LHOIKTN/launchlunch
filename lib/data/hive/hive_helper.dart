@@ -220,16 +220,23 @@ class HiveHelper {
     print('✅ 급식 데이터 upsert 완료');
   }
 
-  // 가장 최근 급식 날짜 가져오기 (기본값: 1970-01-01)
-  String getLatestMealDate() {
-    final meals = getAllMeals();
-    if (meals.isEmpty) {
-      return '1970-01-01';
-    }
+  // 급식 데이터 마지막 갱신일 가져오기 (기본값: 1970-01-01)
+  String getLastMealUpdatedAt() {
+    return _userBox?.get('last_meal_updated_at', defaultValue: '1970-01-01') ??
+        '1970-01-01';
+  }
 
-    // lunchDate를 기준으로 정렬하여 가장 최근 날짜 반환
-    meals.sort((a, b) => b.lunchDate.compareTo(a.lunchDate));
-    return meals.first.lunchDate;
+  // 급식 데이터 마지막 갱신일 설정
+  Future<void> setLastMealUpdatedAt(String updatedAt) async {
+    await _userBox?.put('last_meal_updated_at', updatedAt);
+    print('📅 급식 마지막 갱신일 업데이트: $updatedAt');
+  }
+
+  // 모든 급식 데이터 삭제
+  Future<void> clearAllMeals() async {
+    print('🗑️ 모든 급식 데이터 삭제 시작...');
+    await _mealBox?.clear();
+    print('✅ 모든 급식 데이터 삭제 완료');
   }
 
   // 닉네임 관련 메서드들

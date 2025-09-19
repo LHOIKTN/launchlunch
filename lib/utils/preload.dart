@@ -486,11 +486,11 @@ class PreloadData {
   Future<void> _syncMeals() async {
     print('🍽️ 급식 데이터 동기화 시작...');
 
-    final lastMealDate = HiveHelper.instance.getLatestMealDate();
-    print('📅 급식 마지막 갱신일: $lastMealDate');
+    final lastUpdatedAt = HiveHelper.instance.getLastMealUpdatedAt();
+    print('📅 급식 마지막 갱신일: $lastUpdatedAt');
 
     try {
-      final mealsData = await api.getMeals(lastMealDate);
+      final mealsData = await api.getMeals(lastUpdatedAt);
       print('📊 Supabase 응답 데이터: ${mealsData.length}개');
 
       if (mealsData.isEmpty) {
@@ -501,13 +501,16 @@ class PreloadData {
       print('🔄 ${mealsData.length}개의 급식 데이터 처리 중...');
 
       final List<DailyMeal> mealList = [];
+      String latestUpdatedAt = lastUpdatedAt;
 
       for (final mealData in mealsData) {
         final String lunchDate = mealData['lunch_date'];
         final String menuList = mealData['menu_list'] ?? '';
         final List<int> foods = List<int>.from(mealData['foods'] ?? []);
+        final String updatedAt = mealData['updated_at'];
 
-        print('🍽️ 처리 중: 날짜=$lunchDate, 메뉴=$menuList, 음식=${foods.length}개');
+        print(
+            '🍽️ 처리 중: 날짜=$lunchDate, 메뉴=$menuList, 음식=${foods.length}개 (updated_at: $updatedAt)');
 
         // DailyMeal 객체 생성
         final meal = DailyMeal(
@@ -518,10 +521,21 @@ class PreloadData {
         );
         print(meal);
         mealList.add(meal);
+
+        // 급식 데이터의 최신 갱신일 추적
+        if (updatedAt.compareTo(latestUpdatedAt) > 0) {
+          latestUpdatedAt = updatedAt;
+        }
       }
 
       // Hive에 upsert (있으면 업데이트, 없으면 추가)
       await HiveHelper.instance.upsertMeals(mealList);
+
+      // 급식 마지막 갱신일 업데이트
+      if (latestUpdatedAt != lastUpdatedAt) {
+        await HiveHelper.instance.setLastMealUpdatedAt(latestUpdatedAt);
+        print('📅 급식 마지막 갱신일 업데이트: $latestUpdatedAt');
+      }
 
       // 저장된 데이터 확인
       print('📋 Hive에 저장된 급식 데이터 확인:');
