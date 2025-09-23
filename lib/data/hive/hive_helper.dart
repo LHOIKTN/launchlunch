@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/food.dart';
 import '../../models/meal.dart';
 import 'dart:convert';
-import 'dart:io'; // 파일 삭제를 위한 임포트
+import '../../constants/basic_ingredients.dart';import 'dart:io'; // 파일 삭제를 위한 임포트
 
 class HiveHelper {
   static final HiveHelper instance = HiveHelper._internal();
@@ -258,7 +258,7 @@ class HiveHelper {
 
     // 기본 재료들의 이름으로 ID 찾기
     final allFoods = getAllFoods();
-    final basicIngredientNames = ['쌀', '밀', '깨', '소금', '설탕'];
+    final basicIngredientNames = BasicIngredients.names;
     final now = DateTime.now();
     final List<Map<String, dynamic>> grantedIngredients = [];
 

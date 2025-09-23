@@ -7,7 +7,7 @@ import '../data/hive/hive_helper.dart';
 import '../data/supabase/api_service.dart';
 import '../utils/download_image.dart';
 import '../utils/asset_image_manager.dart';
-import '../models/meal.dart';
+import '../constants/basic_ingredients.dart';import '../models/meal.dart';
 
 class PreloadData {
   final api = SupabaseApi();
@@ -603,7 +603,7 @@ class PreloadData {
     try {
       // 현재 획득한 재료들 확인
       final acquiredFoods = HiveHelper.instance.getAcquiredFoods();
-      final basicIngredientNames = ['쌀', '밀', '깨', '소금', '설탕'];
+      final basicIngredientNames = BasicIngredients.names;
 
       // 기본 재료 중 획득하지 않은 것들 찾기
       final missingBasicIngredients = <String>[];
