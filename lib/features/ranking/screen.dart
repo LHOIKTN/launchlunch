@@ -71,7 +71,9 @@ class _RankingScreenState extends State<RankingScreen> {
           _rankingList.addAll(newRankings);
         }
         _currentOffset += _pageSize;
-        _hasMore = newRankings.length == _pageSize;
+
+        // 더 정확한 끝 감지: 받아온 데이터가 요청한 페이지 크기보다 작으면 끝
+        _hasMore = newRankings.length >= _pageSize;
         _isLoading = false;
       });
     } catch (e) {
@@ -120,19 +122,60 @@ class _RankingScreenState extends State<RankingScreen> {
                       child: Text('랭킹 데이터가 없습니다.'),
                     )
                   : ListView.builder(
-                      itemCount: _rankingList.length + (_hasMore ? 1 : 0),
+                      itemCount: _rankingList.length +
+                          (_hasMore || _isLoading ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == _rankingList.length) {
-                          if (_hasMore) {
-                            _loadRanking();
+                          if (_isLoading) {
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(16.0),
                                 child: CircularProgressIndicator(),
                               ),
                             );
+                          } else if (_hasMore) {
+                            // 스크롤 끝에 도달하면 자동으로 다음 페이지 로드
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _loadRanking();
+                            });
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          } else {
+                            // 더 이상 데이터가 없을 때 끝 메시지 표시
+                            return Container(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.emoji_events,
+                                    size: 32,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '랭킹 끝에 도달했습니다',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '모든 랭킹을 확인하셨습니다! 🎉',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
                           }
-                          return const SizedBox.shrink();
                         }
 
                         final ranking = _rankingList[index];
@@ -435,9 +478,8 @@ class _RankingScreenState extends State<RankingScreen> {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      // 한국 시간대로 변환 (UTC+9)
-      final koreaTime = date.toUtc().add(const Duration(hours: 9));
-      return '${koreaTime.month}월 ${koreaTime.day}일 ${koreaTime.hour.toString().padLeft(2, '0')}:${koreaTime.minute.toString().padLeft(2, '0')}:${koreaTime.second.toString().padLeft(2, '0')}';
+      // 로컬 시간 그대로 사용 (이미 한국 시간으로 저장됨)
+      return '${date.month}월 ${date.day}일 ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return dateString;
     }
